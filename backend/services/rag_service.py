@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any
 import google.generativeai as genai
 
-from ..config import get_settings
-from ..services.scheme_repository import get_scheme_repository
+from config import get_settings
+from services.scheme_repository import get_scheme_repository
 
 logger = logging.getLogger("jansathi.rag")
 

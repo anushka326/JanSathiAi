@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Any
 
-from ..models.scheme import Scheme
-from ..services.scheme_repository import SchemeRepository, get_scheme_repository
-from ..services.database import mongo_manager
+from models.scheme import Scheme
+from services.scheme_repository import SchemeRepository, get_scheme_repository
+from services.database import mongo_manager
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

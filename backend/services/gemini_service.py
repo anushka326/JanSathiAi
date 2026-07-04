@@ -1,6 +1,6 @@
 from typing import Any
 import httpx
-from ..config import get_settings
+from config import get_settings
 
 
 class GeminiService:

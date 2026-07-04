@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from ..models.scheme import Scheme
-from ..services.database import mongo_manager
-from ..services.gemini_service import GeminiService
-from ..services.rag_service import RAGService
-from ..services.scheme_repository import SchemeRepository, get_scheme_repository
-from ..services.auth_service import decode_access_token
+from models.scheme import Scheme
+from services.database import mongo_manager
+from services.gemini_service import GeminiService
+from services.rag_service import RAGService
+from services.scheme_repository import SchemeRepository, get_scheme_repository
+from services.auth_service import decode_access_token
 
 router = APIRouter(prefix="/schemes", tags=["schemes"])
 bearer_scheme = HTTPBearer(auto_error=True)

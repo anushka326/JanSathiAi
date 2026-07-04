@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from ..schemas.eligibility import EligibilityRequest, EligibilityResponse
-from ..services.database import mongo_manager
-from ..services.eligibility_engine import EligibilityEngine
-from ..services.scheme_repository import SchemeRepository, get_scheme_repository
-from ..services.auth_service import decode_access_token
+from schemas.eligibility import EligibilityRequest, EligibilityResponse
+from services.database import mongo_manager
+from services.eligibility_engine import EligibilityEngine
+from services.scheme_repository import SchemeRepository, get_scheme_repository
+from services.auth_service import decode_access_token
 
 router = APIRouter(prefix="/eligibility", tags=["eligibility"])
 optional_bearer_scheme = HTTPBearer(auto_error=False)

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..models.scheme import Scheme
+from models.scheme import Scheme
 
 
 Gender = Literal["female", "male", "other", "prefer_not_to_say"]

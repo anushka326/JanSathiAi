@@ -3,7 +3,7 @@ import hashlib
 import re
 from cryptography.fernet import Fernet, InvalidToken
 
-from ..config import get_settings
+from config import get_settings
 
 
 def mask_aadhaar(value: str) -> str:

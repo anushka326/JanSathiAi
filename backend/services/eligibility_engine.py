@@ -1,8 +1,8 @@
 from collections.abc import Callable
 
-from ..models.scheme import Scheme
-from ..schemas.eligibility import EligibilityRequest, EligibilityResponse, SchemeDecision
-from ..services.recommendation_engine import RecommendationEngine
+from models.scheme import Scheme
+from schemas.eligibility import EligibilityRequest, EligibilityResponse, SchemeDecision
+from services.recommendation_engine import RecommendationEngine
 
 
 ProfileRule = Callable[[EligibilityRequest], tuple[bool, list[str]]]

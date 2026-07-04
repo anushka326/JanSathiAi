@@ -24,7 +24,6 @@ class UserCreate(BaseModel):
     email: str = Field(min_length=5, max_length=160)
     password: str = Field(min_length=8, max_length=128)
     state: str = Field(min_length=2, max_length=80)
-    preferred_language: str = Field(default="en", pattern="^(en|hi|mr)$")
 
     @field_validator("email")
     @classmethod
@@ -55,12 +54,7 @@ class UserPublic(BaseModel):
     full_name: str
     email: str
     state: str
-    preferred_language: str = "en"
     profile: UserProfile | None = None
-
-
-class LanguageUpdate(BaseModel):
-    preferred_language: str = Field(pattern="^(en|hi|mr)$")
 
 
 class AuthResponse(BaseModel):

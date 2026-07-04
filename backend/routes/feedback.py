@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from ..services.database import mongo_manager
+from services.database import mongo_manager
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 

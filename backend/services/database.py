@@ -4,7 +4,7 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from ..config import get_settings
+from config import get_settings
 
 logger = logging.getLogger("jansathi.database")
 

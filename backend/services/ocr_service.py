@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 import google.generativeai as genai
 
-from ..config import get_settings
+from config import get_settings
 
 logger = logging.getLogger("jansathi.ocr")
 

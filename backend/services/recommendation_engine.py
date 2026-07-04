@@ -1,6 +1,6 @@
 import re
 from typing import Any
-from ..models.scheme import Scheme
+from models.scheme import Scheme
 
 
 class RecommendationEngine:

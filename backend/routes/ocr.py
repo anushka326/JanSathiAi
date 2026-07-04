@@ -2,10 +2,10 @@ import logging
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from typing import Any
 
-from ..services.ocr_service import OCRService
-from ..services.database import mongo_manager
-from ..utils.security import mask_aadhaar, mask_pan, EncryptionService
-from ..routes.eligibility import get_optional_user
+from services.ocr_service import OCRService
+from services.database import mongo_manager
+from utils.security import mask_aadhaar, mask_pan, EncryptionService
+from routes.eligibility import get_optional_user
 
 logger = logging.getLogger("jansathi.ocr_route")
 router = APIRouter(prefix="/ocr", tags=["ocr"])
