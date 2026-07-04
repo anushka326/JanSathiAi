@@ -8,13 +8,4 @@ cryptography==44.0.0
 python-multipart==0.0.20
 httpx==0.28.1
 orjson==3.10.12
-pytest==8.3.4
-pytest-asyncio==0.25.0
-
-# Phase 5+ dependencies are declared for the planned architecture but are not used
-# by the mandatory first milestone.
-paddleocr==2.9.1
-langchain==0.3.13
-chromadb==0.5.23
-sentence-transformers==3.3.1
 google-generativeai==0.8.3
