@@ -1,5 +1,6 @@
-import { Search, Sparkles, X, Heart, ShieldAlert, Award } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Search, Sparkles, X, ShieldAlert, WifiOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 import { listSchemes } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -13,16 +14,16 @@ import { SchemeDecisionCard } from "../components/SchemeDecisionCard";
 import { ExplainDrawer } from "../components/ExplainDrawer";
 
 const categoryTabs = [
-  { id: "all", label: "All Schemes", icon: "🇮🇳" },
-  { id: "farmer", label: "Farmers", icon: "🌾" },
-  { id: "student", label: "Students", icon: "🎓" },
-  { id: "women", label: "Women Welfare", icon: "👩" },
-  { id: "worker", label: "Workers", icon: "👨‍🏭" },
-  { id: "senior", label: "Senior Citizens", icon: "👴" },
-  { id: "divyang", label: "Divyang", icon: "🧑‍🦽" },
-  { id: "health", label: "Health", icon: "❤️" },
-  { id: "housing", label: "Housing", icon: "🏠" },
-  { id: "employment", label: "Employment", icon: "💼" },
+  { id: "all", labelKey: "schemes.categoryTabs.all", icon: "🇮🇳" },
+  { id: "farmer", labelKey: "schemes.categoryTabs.farmer", icon: "🌾" },
+  { id: "student", labelKey: "schemes.categoryTabs.student", icon: "🎓" },
+  { id: "women", labelKey: "schemes.categoryTabs.women", icon: "👩" },
+  { id: "worker", labelKey: "schemes.categoryTabs.worker", icon: "👨‍🏭" },
+  { id: "senior", labelKey: "schemes.categoryTabs.senior", icon: "👴" },
+  { id: "divyang", labelKey: "schemes.categoryTabs.divyang", icon: "🧑‍🦽" },
+  { id: "health", labelKey: "schemes.categoryTabs.health", icon: "❤️" },
+  { id: "housing", labelKey: "schemes.categoryTabs.housing", icon: "🏠" },
+  { id: "employment", labelKey: "schemes.categoryTabs.employment", icon: "💼" },
 ];
 
 export function SchemesPage() {
@@ -34,20 +35,39 @@ export function SchemesPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { showToast } = useToast();
 
+  const showToastRef = useRef(showToast);
+  useEffect(() => { showToastRef.current = showToast; });
+
+  const [apiError, setApiError] = useState<string | null>(null);
+
   useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setApiError(null);
     listSchemes()
-      .then(setSchemes)
-      .catch((error) =>
-        showToast({
-          title: "Unable to load schemes",
-          description: error instanceof Error ? error.message : "Please verify the backend is running.",
-          variant: "error",
-        }),
-      )
-      .finally(() => setIsLoading(false));
-  }, [showToast]);
+      .then((data) => {
+        if (!cancelled) setSchemes(data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          const msg = error instanceof Error ? error.message : "Could not reach the backend server.";
+          setApiError(msg);
+          showToastRef.current({
+            title: t("schemes.loadErrorTitle"),
+            description: msg,
+            variant: "error",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Autocomplete Suggestions
   const suggestions = useMemo(() => {
@@ -61,7 +81,9 @@ export function SchemesPage() {
 
   // Dynamic Filtering
   const filteredSchemes = useMemo(() => {
-    let result = schemes;
+    // Defensive: ensure schemes is always an array
+    const safeSchemes = Array.isArray(schemes) ? schemes : [];
+    let result = safeSchemes;
     
     // 1. Filter by category tab
     if (selectedCategory !== "all") {
@@ -93,11 +115,12 @@ export function SchemesPage() {
         s.category,
         s.state,
         s.summary,
-        ...s.keywords,
-        ...s.eligibility,
-      ].some((value) => value.toLowerCase().includes(needle))
+        ...(Array.isArray(s.keywords) ? s.keywords : []),
+        ...(Array.isArray(s.eligibility) ? s.eligibility : []),
+      ].some((value) => typeof value === "string" && value.toLowerCase().includes(needle))
     );
   }, [query, selectedCategory, schemes]);
+
 
   // Score fallback calculations if user does not have a computed profile
   const schemeDecisions = useMemo(() => {
@@ -151,9 +174,9 @@ export function SchemesPage() {
       {/* Search Header Banner */}
       <section className="rounded-2xl border bg-card p-6 shadow-soft mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Scheme Directory</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("schemes.pageTitle")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Browse and query central and state benefits using semantic smart search.
+            {t("schemes.pageSubtitle")}
           </p>
         </div>
         
@@ -170,7 +193,7 @@ export function SchemesPage() {
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder="Search by name, benefit, state, keywords..."
+              placeholder={t("schemes.searchPlaceholder")}
             />
             {query && (
               <button 
@@ -215,7 +238,7 @@ export function SchemesPage() {
             }`}
           >
             <span>{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span>{t(tab.labelKey)}</span>
           </button>
         ))}
       </section>
@@ -227,13 +250,24 @@ export function SchemesPage() {
             <Skeleton key={index} className="h-64 rounded-2xl" />
           ))}
         </div>
+      ) : apiError && schemes.length === 0 ? (
+        <div className="rounded-2xl border border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-400/30 p-12 text-center">
+          <WifiOff className="h-10 w-10 text-orange-400 mx-auto mb-3" />
+          <p className="font-semibold text-sm text-orange-700 dark:text-orange-300">Backend Server Offline</p>
+          <p className="text-xs mt-1 text-orange-600 dark:text-orange-400 max-w-sm mx-auto">
+            Could not load schemes from the API. Please make sure the backend server is running on port 8000 and try refreshing.
+          </p>
+          <Button variant="outline" className="mt-4 border-orange-300 text-orange-700" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
       ) : schemeDecisions.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground bg-card">
           <ShieldAlert className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-          <p className="font-semibold text-sm">No schemes match your filter or search query.</p>
-          <p className="text-xs mt-1">Try refining your search terms or clearing the active category tab.</p>
+          <p className="font-semibold text-sm">{t("schemes.noResultsTitle")}</p>
+          <p className="text-xs mt-1">{t("schemes.noResultsDesc")}</p>
           <Button variant="outline" className="mt-4" onClick={() => { setQuery(""); setSelectedCategory("all"); }}>
-            Clear Search & Filters
+            {t("schemes.clearFilters")}
           </Button>
         </div>
       ) : (

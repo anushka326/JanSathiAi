@@ -46,6 +46,7 @@ _demo_users["admin@jansathi.gov.in"] = {
     "email": "admin@jansathi.gov.in",
     "state": "Delhi",
     "password_hash": _hash_password("admin123", salt="demosaltadmin"),
+    "preferred_language": "en",
     "created_at": datetime.now(UTC),
 }
 _demo_users["citizen@jansathi.gov.in"] = {
@@ -54,6 +55,7 @@ _demo_users["citizen@jansathi.gov.in"] = {
     "email": "citizen@jansathi.gov.in",
     "state": "Maharashtra",
     "password_hash": _hash_password("citizen123", salt="demosaltcitizen"),
+    "preferred_language": "en",
     "created_at": datetime.now(UTC),
 }
 
@@ -83,6 +85,7 @@ def create_access_token(user: UserPublic) -> str:
         "email": user.email,
         "name": user.full_name,
         "state": user.state,
+        "preferred_language": user.preferred_language,
         "exp": int(expires_at.timestamp()),
     }
     header_segment = _b64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
@@ -132,6 +135,7 @@ def _public_user(user: dict[str, Any]) -> UserPublic:
         full_name=user["full_name"],
         email=user["email"],
         state=user["state"],
+        preferred_language=user.get("preferred_language", "en"),
         profile=UserProfile(**profile) if isinstance(profile, dict) else None,
     )
 
@@ -146,6 +150,7 @@ async def register_user(payload: UserCreate) -> UserPublic:
         "email": payload.email,
         "state": payload.state,
         "password_hash": _hash_password(payload.password),
+        "preferred_language": payload.preferred_language,
         "profile": {},
         "created_at": datetime.now(UTC),
     }
@@ -183,3 +188,20 @@ async def authenticate_user(payload: UserLogin) -> UserPublic:
     )
     
     return user_public
+
+
+async def update_user_language(email: str, preferred_language: str) -> UserPublic:
+    user = await _find_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user["preferred_language"] = preferred_language
+    if mongo_manager.is_connected:
+        await mongo_manager.db.users.update_one(
+            {"email": email},
+            {"$set": {"preferred_language": preferred_language}},
+        )
+    else:
+        _demo_users[email] = user
+
+    return _public_user(user)

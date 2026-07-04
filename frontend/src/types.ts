@@ -25,6 +25,7 @@ export interface User {
   full_name: string;
   email: string;
   state: string;
+  preferred_language?: "en" | "hi" | "mr";
   is_admin?: boolean;
   profile?: UserProfile | null;
 }

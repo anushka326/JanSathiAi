@@ -1,5 +1,6 @@
 import { Bookmark, BookmarkCheck, ExternalLink, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../hooks/useToast";
 import type { SchemeDecision } from "../types";
 import { Button } from "./ui/button";
@@ -29,6 +30,7 @@ const categoryIcons: Record<string, string> = {
 export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
   const { scheme, reasons, score, match_percentage, breakdown } = decision;
   const { user, savedSchemes, toggleSaveScheme } = useAuth();
+  const { t } = useLanguage();
   const { showToast } = useToast();
 
   const isSaved = savedSchemes.includes(scheme.scheme_name);
@@ -37,14 +39,14 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
 
   const breakdownLabels = Object.entries(breakdown || {}).filter(([, val]) => val);
   const explanationText = status === "eligible"
-    ? `Recommended because: ${breakdownLabels.length ? breakdownLabels.map(([key]) => key.replace(/_/g, " ")).join(", ") : "profile overlap"}`
-    : `Not recommended because: ${breakdownLabels.length ? breakdownLabels.map(([key]) => key.replace(/_/g, " ")).join(", ") : "eligibility mismatch"}`;
+    ? t("schemes.decisionCard.profileOverlap", { reasons: breakdownLabels.length ? breakdownLabels.map(([key]) => key.replace(/_/g, " ")).join(", ") : t("schemes.decisionCard.matchingCriteria") })
+    : t("schemes.decisionCard.eligibilityMismatch", { reasons: breakdownLabels.length ? breakdownLabels.map(([key]) => key.replace(/_/g, " ")).join(", ") : t("schemes.decisionCard.matchingCriteria") });
 
   async function handleSaveToggle() {
     if (!user) {
       showToast({
-        title: "Authentication Required",
-        description: "Please log in or register to save schemes to your personal library.",
+        title: t("schemes.decisionCard.authenticationRequiredTitle"),
+        description: t("schemes.decisionCard.authenticationRequiredDescription"),
         variant: "error",
       });
       return;
@@ -58,8 +60,8 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
       });
     } catch (e) {
       showToast({
-        title: "Action Failed",
-        description: "Unable to update saved status.",
+        title: t("schemes.decisionCard.actionFailed"),
+        description: t("schemes.decisionCard.noDocumentsListed"),
         variant: "error",
       });
     }
@@ -90,7 +92,7 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
         {/* Match criteria breakdown checkmarks */}
         {breakdown && Object.keys(breakdown).length > 0 && (
           <div className="rounded-lg border bg-background/50 p-2.5">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Matching Criteria</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{t("schemes.decisionCard.matchingCriteria")}</p>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {Object.entries(breakdown).map(([key, val]) => (
                 <span key={key} className={`flex items-center gap-1 font-medium ${val ? "text-primary" : "text-muted-foreground opacity-60"}`}>
@@ -103,13 +105,13 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
         )}
 
         <div className="rounded-lg border bg-background/50 p-2.5">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Recommendation Explanation</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t("schemes.decisionCard.recommendationExplanation")}</p>
           <p className="mt-1 text-xs text-foreground">{explanationText}</p>
         </div>
 
         {/* Reason breakdown */}
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Evaluation Reasons</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("schemes.decisionCard.evaluationReasons")}</p>
           <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground leading-relaxed pl-4 list-disc">
             {reasons.map((reason, idx) => (
               <li key={idx}>{reason}</li>
@@ -121,13 +123,13 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
         {status === "eligible" && (
           <div className="grid gap-2.5 rounded-lg bg-background p-3 border shadow-inner">
             <div>
-              <p className="text-xs font-semibold text-foreground">Scheme Benefit</p>
+              <p className="text-xs font-semibold text-foreground">{t("schemes.decisionCard.schemeBenefit")}</p>
               <p className="text-xs text-muted-foreground leading-normal mt-0.5">{scheme.benefit}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-foreground">Required Documents</p>
+              <p className="text-xs font-semibold text-foreground">{t("schemes.decisionCard.requiredDocuments")}</p>
               <p className="text-xs text-muted-foreground leading-normal mt-0.5">
-                {scheme.documents.length ? scheme.documents.join(", ") : "No documents listed"}
+                {scheme.documents.length ? scheme.documents.join(", ") : t("schemes.decisionCard.noDocumentsListed")}
               </p>
             </div>
           </div>
@@ -142,7 +144,7 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
               variant="ghost"
               className={`h-9 w-9 p-0 border rounded-lg ${isSaved ? "text-primary bg-primary/5 hover:bg-primary/10" : "text-muted-foreground hover:bg-muted"}`}
               onClick={handleSaveToggle}
-              title={isSaved ? "Remove from Saved" : "Save Scheme"}
+              title={isSaved ? t("schemes.decisionCard.removeFromSaved") : t("schemes.decisionCard.saveScheme")}
             >
               {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
             </Button>
@@ -154,7 +156,7 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
                 onClick={() => onExplain(scheme.scheme_name)}
               >
                 <Sparkles className="h-3.5 w-3.5 mr-1" />
-                <span>Explain with AI</span>
+                <span>{t("schemes.decisionCard.explainWithAI")}</span>
               </Button>
             )}
 
@@ -162,7 +164,7 @@ export function SchemeDecisionCard({ decision, status, onExplain }: Props) {
               variant="ghost"
               className="h-9 w-9 p-0 border rounded-lg"
               onClick={() => window.open(scheme.official_website, "_blank", "noopener,noreferrer")}
-              title="Official Portal"
+              title={t("schemes.decisionCard.officialPortal")}
             >
               <ExternalLink className="h-4 w-4" />
             </Button>

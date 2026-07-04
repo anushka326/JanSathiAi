@@ -8,6 +8,7 @@ import { checkEligibility, uploadDocumentOCR } from "../services/api";
 import type { EligibilityRequest, EligibilityResponse, UserProfile } from "../types";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Field, checkboxClassName, inputClassName } from "./ui/form-field";
@@ -59,6 +60,7 @@ export function EligibilityForm({ onResult }: Props) {
   const [ocrLoading, setOcrLoading] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { t } = useLanguage();
   
   const {
     register,
@@ -96,12 +98,12 @@ export function EligibilityForm({ onResult }: Props) {
 
   const booleanFields = useMemo(
     () => [
-      { name: "student_status", label: "Student Flag" },
-      { name: "farmer_status", label: "Farmer Flag" },
-      { name: "disability_status", label: "Disabled Flag" },
-      { name: "rural_resident", label: "Rural Resident" },
-      { name: "has_pucca_house", label: "Owns Pucca House" },
-      { name: "has_bank_account", label: "Has Bank Account" },
+      { name: "student_status" },
+      { name: "farmer_status" },
+      { name: "disability_status" },
+      { name: "rural_resident" },
+      { name: "has_pucca_house" },
+      { name: "has_bank_account" },
     ] as const,
     [],
   );
@@ -173,8 +175,8 @@ export function EligibilityForm({ onResult }: Props) {
             <ShieldCheck className="h-6 w-6" />
           </span>
           <div>
-            <CardTitle className="text-lg">Eligibility Profile Wizard</CardTitle>
-            <CardDescription className="text-xs">Deterministic matching engine validation</CardDescription>
+            <CardTitle className="text-lg">{t("eligibility.formTitle")}</CardTitle>
+            <CardDescription className="text-xs">{t("eligibility.formDescription")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -182,13 +184,13 @@ export function EligibilityForm({ onResult }: Props) {
         {/* Step 1: Document upload hub */}
         <div className="rounded-xl border border-dashed border-primary/30 p-4 bg-primary/5 text-center">
           <FileUp className="h-6 w-6 text-primary mx-auto mb-2" />
-          <p className="text-xs font-semibold text-primary">Auto-fill via Identity Document (OCR)</p>
+          <p className="text-xs font-semibold text-primary">{t("eligibility.uploadTitle")}</p>
           <p className="text-[10px] text-muted-foreground mt-1 mb-3">
-            Upload Aadhaar card or Marksheet. Masking is applied in-memory.
+            {t("eligibility.uploadText")}
           </p>
           <label className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/95 cursor-pointer">
             {ocrLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            <span>{ocrLoading ? "Scanning Document..." : "Upload Document"}</span>
+            <span>{ocrLoading ? t("eligibility.uploadScanning") : t("eligibility.uploadButton")}</span>
             <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleOcrUpload} disabled={ocrLoading} />
           </label>
         </div>
@@ -196,30 +198,30 @@ export function EligibilityForm({ onResult }: Props) {
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Field label="Citizen Name" error={errors.name?.message}>
-                <input className={inputClassName} type="text" placeholder="Enter your full name" {...register("name")} />
+              <Field label={t("eligibility.nameLabel")} error={errors.name?.message}>
+                <input className={inputClassName} type="text" placeholder={t("eligibility.nameLabel")} {...register("name")} />
               </Field>
             </div>
 
-            <Field label="Age" error={errors.age?.message}>
+            <Field label={t("eligibility.ageLabel")} error={errors.age?.message}>
               <input className={inputClassName} type="number" min={0} max={120} placeholder="18" {...register("age")} />
             </Field>
 
-            <Field label="Annual Income (INR)" error={errors.income?.message}>
-              <input className={inputClassName} type="number" min={0} placeholder="Annual Income (INR)" {...register("income")} />
+            <Field label={t("eligibility.incomeLabel")} error={errors.income?.message}>
+              <input className={inputClassName} type="number" min={0} placeholder={t("eligibility.incomeLabel")} {...register("income")} />
             </Field>
 
-            <Field label="Gender" error={errors.gender?.message}>
+            <Field label={t("eligibility.genderLabel")} error={errors.gender?.message}>
               <select className={inputClassName} {...register("gender")}>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
+                <option value="female">{t("common.genderOptions.female")}</option>
+                <option value="male">{t("common.genderOptions.male")}</option>
+                <option value="other">{t("common.genderOptions.other")}</option>
+                <option value="prefer_not_to_say">{t("common.genderOptions.prefer_not_to_say")}</option>
               </select>
             </Field>
 
-            <Field label="Category" error={errors.category?.message}>
-              <select className={inputClassName} {...register("category")}>
+            <Field label={t("eligibility.categoryLabel")} error={errors.category?.message}>
+              <select className={inputClassName} {...register("category")}> 
                 <option value="General">General</option>
                 <option value="OBC">OBC</option>
                 <option value="SC">SC</option>
@@ -228,34 +230,34 @@ export function EligibilityForm({ onResult }: Props) {
               </select>
             </Field>
 
-            <Field label="Occupation" error={errors.occupation?.message}>
-              <input className={inputClassName} placeholder="Student / Farmer / Worker" {...register("occupation")} />
+            <Field label={t("eligibility.occupationLabel")} error={errors.occupation?.message}>
+              <input className={inputClassName} placeholder={t("eligibility.occupationLabel")} {...register("occupation")} />
             </Field>
 
-            <Field label="State of Residence" error={errors.state?.message}>
-              <input className={inputClassName} placeholder="Select State" {...register("state")} />
+            <Field label={t("eligibility.stateLabel")} error={errors.state?.message}>
+              <input className={inputClassName} placeholder={t("eligibility.stateLabel")} {...register("state")} />
             </Field>
 
             <div className="sm:col-span-2">
-              <Field label="Employment Status" error={errors.employment_status?.message}>
+              <Field label={t("eligibility.employmentLabel")} error={errors.employment_status?.message}>
                 <select className={inputClassName} {...register("employment_status")}>
-                  <option value="employed">Employed</option>
-                  <option value="self_employed">Self-employed</option>
-                  <option value="unemployed">Unemployed</option>
-                  <option value="student">Student</option>
-                  <option value="retired">Retired</option>
+                  <option value="employed">{t("common.employmentOptions.employed")}</option>
+                  <option value="self_employed">{t("common.employmentOptions.self_employed")}</option>
+                  <option value="unemployed">{t("common.employmentOptions.unemployed")}</option>
+                  <option value="student">{t("common.employmentOptions.student")}</option>
+                  <option value="retired">{t("common.employmentOptions.retired")}</option>
                 </select>
               </Field>
             </div>
           </div>
 
           <fieldset className="space-y-2 border-t pt-3">
-            <legend className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Demographic Flags</legend>
+            <legend className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("eligibility.demographicFlags")}</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {booleanFields.map((field) => (
                 <label key={field.name} className="flex h-10 items-center gap-2 rounded-lg border bg-background px-3 text-xs cursor-pointer select-none">
                   <input type="checkbox" className={checkboxClassName} {...register(field.name)} />
-                  <span>{field.label}</span>
+                  <span>{t(`eligibility.${field.name}`)}</span>
                 </label>
               ))}
             </div>
@@ -265,7 +267,7 @@ export function EligibilityForm({ onResult }: Props) {
             <label className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs leading-relaxed cursor-pointer select-none">
               <input type="checkbox" className={`${checkboxClassName} mt-0.5`} {...register("consent")} />
               <span className="text-[11px] text-muted-foreground">
-                I verify that my parameters are accurate. I consent to JanSathi processing this profile data to determine matching schemes.
+                {t("eligibility.consentLabel")}
               </span>
             </label>
             {errors.consent?.message && (
@@ -275,7 +277,7 @@ export function EligibilityForm({ onResult }: Props) {
 
           <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            <span>{isSubmitting ? "Calculating Matches..." : "Check Eligible Schemes"}</span>
+            <span>{isSubmitting ? t("eligibility.submitLoading") : t("eligibility.submitButton")}</span>
           </Button>
         </form>
       </CardContent>

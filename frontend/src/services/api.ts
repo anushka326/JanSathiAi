@@ -1,8 +1,8 @@
 import axios from "axios";
-import type { EligibilityRequest, EligibilityResponse, Scheme, SchemeDecision } from "../types";
+import type { EligibilityRequest, EligibilityResponse, Scheme, SchemeDecision, User } from "../types";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1",
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api/v1",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -66,6 +66,13 @@ export async function uploadDocumentOCR(formData: FormData): Promise<any> {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+  });
+  return response.data;
+}
+
+export async function updatePreferredLanguage(preferredLanguage: "en" | "hi" | "mr"): Promise<User> {
+  const response = await api.put<User>("/auth/language", {
+    preferred_language: preferredLanguage,
   });
   return response.data;
 }

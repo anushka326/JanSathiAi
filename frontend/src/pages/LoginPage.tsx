@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Landmark, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Landmark, Loader2, Lock, Mail } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
+import { LANGUAGE_STORAGE_KEY, useLanguage, type Language } from "../context/LanguageContext";
 import { useToast } from "../hooks/useToast";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -11,28 +12,34 @@ import { Field, inputClassName } from "../components/ui/form-field";
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login } = useAuth();
+  const { setLanguage, t } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
-      showToast({ title: "Validation Error", description: "Email and password are required.", variant: "error" });
+      showToast({ title: t("auth.loginValidationError"), description: t("auth.loginValidationError"), variant: "error" });
       return;
     }
     
     setIsSubmitting(true);
     try {
       await login(email, password);
-      showToast({ title: "Welcome back!", description: "You have logged in successfully." });
+      const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (storedLanguage === "en" || storedLanguage === "hi" || storedLanguage === "mr") {
+        setLanguage(storedLanguage as Language);
+      }
+      showToast({ title: t("auth.loginSuccess"), description: t("auth.loginSuccess") });
       navigate("/dashboard");
     } catch (err: any) {
       showToast({
-        title: "Login failed",
-        description: err.response?.data?.detail || "Invalid email or password.",
+        title: t("auth.loginFailed"),
+        description: err.response?.data?.detail || t("auth.loginFailedFallback"),
         variant: "error",
       });
     } finally {
@@ -49,20 +56,20 @@ export function LoginPage() {
               <Landmark className="h-6 w-6" />
             </span>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Citizen Login</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">{t("auth.loginTitle")}</CardTitle>
           <CardDescription>
-            Enter your credentials to access your saved schemes and history
+            {t("auth.loginDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <Field label="Email Address">
+            <Field label={t("auth.emailLabel")}>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <input
                   type="email"
                   className={`${inputClassName} pl-10`}
-                  placeholder="name@example.gov.in"
+                  placeholder={t("auth.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -70,17 +77,25 @@ export function LoginPage() {
               </div>
             </Field>
 
-            <Field label="Password">
+            <Field label={t("auth.passwordLabel")}>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <input
-                  type="password"
-                  className={`${inputClassName} pl-10`}
-                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
+                  className={`${inputClassName} pl-10 pr-10`}
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </Field>
 
@@ -88,19 +103,16 @@ export function LoginPage() {
               {isSubmitting ? (
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
               ) : null}
-              <span>Sign In</span>
+              <span>{t("auth.signInButton")}</span>
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
-              Don't have an account?{" "}
+              {t("auth.noAccount")} {" "}
               <Link to="/register" className="font-semibold text-primary hover:underline">
-                Register here
+                {t("auth.registerLink")}
               </Link>
-            </p>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Demo credentials: <span className="font-mono bg-muted px-1.5 py-0.5 rounded">admin@jansathi.gov.in</span> / <span className="font-mono bg-muted px-1.5 py-0.5 rounded">admin123</span>
             </p>
           </div>
         </CardContent>

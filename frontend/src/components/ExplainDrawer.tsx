@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { X, Sparkles, Loader2, BookOpen, Heart, FileText, ChevronRight, ExternalLink } from "lucide-react";
+import { X, Sparkles, Loader2, BookOpen } from "lucide-react";
 import { explainScheme } from "../services/api";
+import { useLanguage } from "../context/LanguageContext";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 export function ExplainDrawer({ schemeName, onClose }: Props) {
   const [explanation, setExplanation] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState("en");
+  const { language, setLanguage, t, supportedLanguages } = useLanguage();
 
   useEffect(() => {
     if (!schemeName) {
@@ -25,7 +26,7 @@ export function ExplainDrawer({ schemeName, onClose }: Props) {
         const text = await explainScheme(schemeName!, language);
         setExplanation(text);
       } catch (error) {
-        setExplanation("Failed to load AI explanation. Please check your network connection.");
+        setExplanation(t("explain.loadFailed"));
       } finally {
         setIsLoading(false);
       }
@@ -116,7 +117,7 @@ export function ExplainDrawer({ schemeName, onClose }: Props) {
               <h2 className="text-sm font-extrabold text-foreground truncate max-w-[280px]">
                 {schemeName}
               </h2>
-              <p className="text-[10px] text-muted-foreground font-semibold">AI Assistant Explanation</p>
+              <p className="text-[10px] text-muted-foreground font-semibold">{t("explain.aiAssistant")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -124,11 +125,14 @@ export function ExplainDrawer({ schemeName, onClose }: Props) {
             <select 
               className="text-xs bg-background border rounded px-2 py-1 outline-none"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => setLanguage(e.target.value as "en" | "hi" | "mr")}
+              aria-label={t("common.language")}
             >
-              <option value="en">English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="mr">मराठी (Marathi)</option>
+              {Object.entries(supportedLanguages).map(([code, label]) => (
+                <option key={code} value={code} className="text-foreground">
+                  {label}
+                </option>
+              ))}
             </select>
             <Button variant="ghost" className="h-8 w-8 p-0" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -141,16 +145,16 @@ export function ExplainDrawer({ schemeName, onClose }: Props) {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-xs">Consulting RAG database & Gemini...</p>
+              <p className="text-xs">{t("common.loading")}</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="rounded-xl border bg-gradient-to-r from-primary/10 to-transparent p-4 flex gap-3">
                 <BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold">Grounded Context</p>
+                  <p className="text-xs font-bold">{t("explain.groundedContextTitle")}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    This breakdown is compiled dynamically using verified parameters from the Ministry database and generated securely by Gemini.
+                    {t("explain.groundedContextBody")}
                   </p>
                 </div>
               </div>
@@ -168,7 +172,7 @@ export function ExplainDrawer({ schemeName, onClose }: Props) {
             JanSathi AI • Privacy First GovTech MVP
           </p>
           <Button variant="outline" className="text-xs h-9" onClick={onClose}>
-            Close Drawer
+            {t("explain.closeDrawer")}
           </Button>
         </div>
       </div>

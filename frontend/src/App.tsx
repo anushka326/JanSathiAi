@@ -12,6 +12,12 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { WelcomePage } from "./pages/WelcomePage";
+import { LANGUAGE_STORAGE_KEY } from "./context/LanguageContext";
+
+function LandingRoute() {
+  return localStorage.getItem(LANGUAGE_STORAGE_KEY) ? <LandingPage /> : <Navigate to="/welcome" replace />;
+}
 
 function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isAuthenticating } = useAuth();
@@ -49,7 +55,8 @@ export default function App() {
           <Routes>
             <Route element={<AppLayout />}>
               {/* Public Routes */}
-              <Route index element={<LandingPage />} />
+              <Route index element={<LandingRoute />} />
+              <Route path="/welcome" element={<WelcomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/schemes" element={<SchemesPage />} />

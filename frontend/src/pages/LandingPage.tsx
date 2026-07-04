@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Cpu, Eye, FileSpreadsheet, Fingerprint, HelpCircle, Landmark, ShieldCheck, Sparkles, Users, XCircle } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 import { Button } from "../components/ui/button";
 
 const stats = [
@@ -55,42 +56,83 @@ const problems = [
 ];
 
 export function LandingPage() {
+  const { t, supportedLanguages, language } = useLanguage();
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-transparent to-transparent py-20 sm:py-32">
+      <section className="relative overflow-hidden py-24 sm:py-36" style={{background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 25%, #0d5c4a 60%, #134e4a 100%)"}}>
+        {/* Decorative glowing orbs */}
+        <div className="absolute top-[-80px] left-[-80px] h-[400px] w-[400px] rounded-full opacity-20 blur-3xl" style={{background: "radial-gradient(circle, #10b981 0%, transparent 70%)"}} />
+        <div className="absolute bottom-[-60px] right-[-60px] h-[350px] w-[350px] rounded-full opacity-15 blur-3xl" style={{background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)"}} />
+        <div className="absolute top-[40%] left-[55%] h-[200px] w-[200px] rounded-full opacity-10 blur-2xl" style={{background: "radial-gradient(circle, #6366f1 0%, transparent 70%)"}} />
+
         {/* Ashoka Chakra background watermark */}
-        <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] select-none pointer-events-none text-primary">
+        <div className="absolute right-[-5%] top-[-5%] opacity-[0.06] select-none pointer-events-none text-emerald-300">
           <Landmark className="h-[600px] w-[600px]" />
         </div>
+
+        {/* Subtle dot grid */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "32px 32px"}} />
         
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl md:text-7xl">
-            Discover Government Schemes <br />
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              With Grounded AI & Audited Rules
-            </span>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-300 mb-8 backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            AI-Powered Government Scheme Discovery
+          </div>
+
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl md:text-7xl drop-shadow-2xl">
+            {t("landing.heroTitle")}
           </h1>
           
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-            JanSathi AI bridges the gap between citizens and benefits. We combine a rule-based eligibility engine with RAG-grounded Gemini explanations for 100% auditable results.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+            {t("landing.heroSubtitle")}
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
+            <span>{t("common.language")}:</span>
+            {Object.entries(supportedLanguages).map(([code, label]) => (
+              <span
+                key={code}
+                className={`rounded-full border px-3 py-1 transition ${language === code ? "border-emerald-400 bg-emerald-400/10 text-emerald-300" : "border-white/20 bg-white/5 text-slate-300"}`}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
           
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link to="/register">
-              <Button className="h-12 px-6">
-                <span>Start eligibility check</span>
+              <Button className="h-12 px-8 bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-900/40 font-bold">
+                <span>{t("landing.startButton")}</span>
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/schemes">
-              <Button variant="outline" className="h-12 px-6">
-                Browse Scheme Directory
+              <Button variant="outline" className="h-12 px-8 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur font-semibold">
+                {t("landing.browseButton")}
               </Button>
             </Link>
           </div>
+
+          {/* Floating trust badges */}
+          <div className="mt-14 flex flex-wrap justify-center gap-4">
+            {[
+              { icon: ShieldCheck, label: "AES-256 Encrypted" },
+              { icon: Cpu, label: "Deterministic AI Rules" },
+              { icon: Eye, label: "No PII Stored on Disk" },
+              { icon: Fingerprint, label: "Privacy-First Design" },
+            ].map(({ icon: Icon, label }) => (
+              <span key={label} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-medium text-slate-300 backdrop-blur">
+                <Icon className="h-3.5 w-3.5 text-emerald-400" />
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
+
 
       {/* Statistics Strip */}
       <section className="bg-primary py-8 text-primary-foreground border-y border-white/10 shadow-lg">

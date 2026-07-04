@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Landmark, Loader2, Lock, Mail, ShieldAlert, User } from "lucide-react";
+import { Eye, EyeOff, Landmark, Loader2, Lock, Mail, ShieldAlert, User } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../hooks/useToast";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -13,37 +14,38 @@ export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState("Maharashtra");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [consent, setConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { registerUser } = useAuth();
+  const { language, t } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!fullName || !email || !password || !state) {
-      showToast({ title: "Validation Error", description: "All fields are required.", variant: "error" });
+      showToast({ title: t("auth.validationError"), description: t("auth.validationError"), variant: "error" });
       return;
     }
     if (!consent) {
       showToast({
-        title: "Consent Required",
-        description: "You must consent to data processing for eligibility checks.",
-        variant: "error",
+        title: t("auth.consentError"),
+        description: t("auth.consentError"),
       });
       return;
     }
     
     setIsSubmitting(true);
     try {
-      await registerUser(fullName, email, state, password, consent);
-      showToast({ title: "Registration Successful", description: "Your citizen profile has been created." });
+      await registerUser(fullName, email, state, password, consent, language);
+      showToast({ title: t("auth.registerTitle"), description: t("auth.registrationSuccess") });
       navigate("/dashboard");
     } catch (err: any) {
       showToast({
-        title: "Registration failed",
-        description: err.response?.data?.detail || "Could not register account.",
+        title: t("auth.registerTitle"),
+        description: err.response?.data?.detail || t("auth.registrationFailed"),
         variant: "error",
       });
     } finally {
@@ -60,14 +62,14 @@ export function RegisterPage() {
               <Landmark className="h-6 w-6" />
             </span>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Citizen Registration</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">{t("auth.registerTitle")}</CardTitle>
           <CardDescription>
-            Create an account for personalized scheme recommendation
+            {t("auth.registerDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <Field label="Full Name">
+            <Field label={t("auth.fullNameLabel")}>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <input
@@ -81,7 +83,7 @@ export function RegisterPage() {
               </div>
             </Field>
 
-            <Field label="Email Address">
+            <Field label={t("auth.emailLabel")}>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <input
@@ -96,7 +98,7 @@ export function RegisterPage() {
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="State of Residence">
+              <Field label={t("auth.stateLabel")}>
                 <input
                   type="text"
                   className={inputClassName}
@@ -107,17 +109,25 @@ export function RegisterPage() {
                 />
               </Field>
 
-              <Field label="Password">
+              <Field label={t("auth.passwordLabel")}>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <input
-                    type="password"
-                    className={`${inputClassName} pl-10`}
+                    type={showPassword ? "text" : "password"}
+                    className={`${inputClassName} pl-10 pr-10`}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </Field>
             </div>
@@ -147,15 +157,15 @@ export function RegisterPage() {
               {isSubmitting ? (
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
               ) : null}
-              <span>Register Citizen Profile</span>
+              <span>{t("auth.createAccountButton")}</span>
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
-              Already registered?{" "}
+              {t("auth.alreadyRegistered")} {" "}
               <Link to="/login" className="font-semibold text-primary hover:underline">
-                Sign in here
+                {t("auth.signInHere")}
               </Link>
             </p>
           </div>

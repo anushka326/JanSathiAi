@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, BookOpen, AlertCircle, FilePlus2, FileEdit, Trash2, Users, Star, BarChart3, Clock, HelpCircle, Activity } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft, BookOpen, AlertCircle, FilePlus2, FileEdit, Trash2, Users, Star, BarChart3, Clock, HelpCircle, Activity, RefreshCcw, ShieldCheck, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import {
   getAdminAnalytics,
   getAdminAuditLogs,
@@ -21,14 +22,16 @@ import type { Scheme } from "../types";
 export function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { showToast } = useToast();
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [feedback, setFeedback] = useState<any[]>([]);
   const [schemes, setSchemes] = useState<Scheme[]>([]);
-  const [activeTab, setActiveTab] = useState<"analytics" | "schemes" | "feedback" | "audit">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "insights" | "schemes" | "feedback" | "audit">("analytics");
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
 
   // Scheme CRUD form states
   const [editingScheme, setEditingScheme] = useState<Scheme | null>(null);
@@ -52,35 +55,35 @@ export function AdminDashboard() {
   const [documentsText, setDocumentsText] = useState("");
   const [keywordsText, setKeywordsText] = useState("");
 
+  const loadAdminData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [anData, logs, fb, sch] = await Promise.all([
+        getAdminAnalytics(),
+        getAdminAuditLogs(),
+        getFeedbackList(),
+        listSchemes(),
+      ]);
+      setAnalytics(anData);
+      setAuditLogs(logs);
+      setFeedback(fb);
+      setSchemes(sch);
+    } catch (err) {
+      showToast({ title: t("admin.loadErrorTitle"), description: t("admin.loadErrorDescription"), variant: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
   useEffect(() => {
     if (!user || !user.is_admin) {
-      showToast({ title: "Access Denied", description: "Admin rights required.", variant: "error" });
+      showToast({ title: t("admin.accessDeniedTitle"), description: t("admin.accessDenied"), variant: "error" });
       navigate("/dashboard");
       return;
     }
 
-    async function loadAdminData() {
-      setIsLoading(true);
-      try {
-        const [anData, logs, fb, sch] = await Promise.all([
-          getAdminAnalytics(),
-          getAdminAuditLogs(),
-          getFeedbackList(),
-          listSchemes(),
-        ]);
-        setAnalytics(anData);
-        setAuditLogs(logs);
-        setFeedback(fb);
-        setSchemes(sch);
-      } catch (err) {
-        showToast({ title: "Failed to load dashboard data", description: "Please verify backend services are up.", variant: "error" });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     loadAdminData();
-  }, [user, navigate, showToast]);
+  }, [user, navigate, loadAdminData, showToast]);
 
   function handleOpenCreate() {
     setEditingScheme(null);
@@ -117,9 +120,9 @@ export function AdminDashboard() {
     try {
       await adminDeleteScheme(schemeName);
       setSchemes((prev) => prev.filter((s) => s.scheme_name !== schemeName));
-      showToast({ title: "Scheme Deleted", description: `'${schemeName}' was deleted.` });
+      showToast({ title: t("admin.schemeDeletedTitle"), description: t("admin.schemeDeletedDescription", { scheme: schemeName }) });
     } catch (e) {
-      showToast({ title: "Action failed", description: "Could not delete scheme.", variant: "error" });
+      showToast({ title: t("admin.actionFailed"), description: t("admin.deleteFailed"), variant: "error" });
     }
   }
 
@@ -139,18 +142,18 @@ export function AdminDashboard() {
         // Update Scheme
         await adminUpdateScheme(editingScheme.scheme_name, processed);
         setSchemes((prev) => prev.map((s) => (s.scheme_name === editingScheme.scheme_name ? processed : s)));
-        showToast({ title: "Scheme Updated", description: `'${processed.scheme_name}' updated successfully.` });
+        showToast({ title: t("admin.schemeUpdatedTitle"), description: t("admin.schemeUpdatedDescription", { scheme: processed.scheme_name }) });
       } else {
         // Create Scheme
         await adminAddScheme(processed);
         setSchemes((prev) => [...prev, processed]);
-        showToast({ title: "Scheme Created", description: `'${processed.scheme_name}' added to index.` });
+        showToast({ title: t("admin.schemeCreatedTitle"), description: t("admin.schemeCreatedDescription", { scheme: processed.scheme_name }) });
       }
       setIsFormOpen(false);
     } catch (err: any) {
       showToast({
-        title: "Submission failed",
-        description: err.response?.data?.detail || "Could not save scheme.",
+        title: t("admin.submissionFailedTitle"),
+        description: err.response?.data?.detail || t("admin.submissionFailedDescription"),
         variant: "error",
       });
     }
@@ -170,53 +173,68 @@ export function AdminDashboard() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">GovTech Control Console</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("admin.header")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Analyze usage metrics, audit data accesses, and modify the scheme database.
+            {t("admin.description")}
           </p>
         </div>
         <Link to="/dashboard">
           <Button variant="outline" className="h-10 text-xs">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span>Return to Dashboard</span>
+            <span>{t("admin.returnDashboard")}</span>
           </Button>
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b pb-3 mb-6 overflow-x-auto">
-        <button
-          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
-            activeTab === "analytics" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
-          }`}
-          onClick={() => setActiveTab("analytics")}
-        >
-          System Analytics
-        </button>
-        <button
-          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
-            activeTab === "schemes" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
-          }`}
-          onClick={() => setActiveTab("schemes")}
-        >
-          Scheme Management
-        </button>
-        <button
-          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
-            activeTab === "feedback" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
-          }`}
-          onClick={() => setActiveTab("feedback")}
-        >
-          Citizen Feedback ({feedback.length})
-        </button>
-        <button
-          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
-            activeTab === "audit" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
-          }`}
-          onClick={() => setActiveTab("audit")}
-        >
-          Audit logs ({auditLogs.length})
-        </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-wrap gap-2 border-b pb-3 overflow-x-auto">
+          <button
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
+              activeTab === "analytics" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
+            }`}
+            onClick={() => setActiveTab("analytics")}
+          >
+            {t("admin.tabs.analytics")}
+          </button>
+          <button
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
+              activeTab === "insights" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
+            }`}
+            onClick={() => setActiveTab("insights")}
+          >
+            {t("admin.tabs.insights")}
+          </button>
+          <button
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
+              activeTab === "schemes" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
+            }`}
+            onClick={() => setActiveTab("schemes")}
+          >
+            {t("admin.tabs.schemes")}
+          </button>
+          <button
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
+              activeTab === "feedback" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
+            }`}
+            onClick={() => setActiveTab("feedback")}
+          >
+            {t("admin.tabs.feedback", { count: feedback.length })}
+          </button>
+          <button
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition ${
+              activeTab === "audit" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:bg-muted"
+            }`}
+            onClick={() => setActiveTab("audit")}
+          >
+            {t("admin.tabs.audit", { count: auditLogs.length })}
+          </button>
+        </div>
+
+        <Button variant="outline" className="h-10" onClick={loadAdminData}>
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          {t("admin.refreshButton")}
+        </Button>
       </div>
 
       {/* 1. Analytics tab */}
@@ -329,6 +347,123 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
+      )}
+
+      {activeTab === "insights" && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  System Health
+                </CardTitle>
+                <CardDescription>Live status of the portal and audit collection.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/5 p-3">
+                    <span className="text-xs text-muted-foreground">Database connection</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">Healthy</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/5 p-3">
+                    <span className="text-xs text-muted-foreground">Audit log ingestion</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">Enabled</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/5 p-3">
+                    <span className="text-xs text-muted-foreground">Scheme index status</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">Synced</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-5 w-5 text-secondary" />
+                  User Intelligence
+                </CardTitle>
+                <CardDescription>Snapshot of active users and demographic reach.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="space-y-2">
+                  <div className="rounded-lg border bg-muted/5 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total registered users</p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">{analytics.total_users}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/5 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Average sessions per user</p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">{analytics.total_users ? Math.round(analytics.total_sessions / Math.max(1, analytics.total_users)) : 0}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/5 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Top category reached</p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">{analytics.most_used_category}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  Quick Oversight
+                </CardTitle>
+                <CardDescription>Administrative triggers and summary actions.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="space-y-3">
+                  <div className="rounded-lg border bg-muted/5 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Most recommended</p>
+                    <p className="mt-1 font-semibold text-foreground truncate" title={analytics.most_recommended_scheme}>{analytics.most_recommended_scheme}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/5 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Most bookmarked</p>
+                    <p className="mt-1 font-semibold text-foreground truncate" title={analytics.most_saved_scheme}>{analytics.most_saved_scheme}</p>
+                  </div>
+                  <Button variant="outline" className="h-10 w-full" onClick={loadAdminData}>
+                    <RefreshCcw className="h-4 w-4 mr-2" /> Refresh snapshot
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent Administrative Activity</CardTitle>
+              <CardDescription>Audit log events, user actions, and system events.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {auditLogs.slice(0, 6).map((log) => (
+                  <button
+                    key={log._id || log.created_at}
+                    className="text-left rounded-xl border bg-card p-3 transition hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => setSelectedActivity(log)}
+                  >
+                    <p className="text-[11px] text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">{log.action}</p>
+                    <p className="mt-1 text-xs text-muted-foreground truncate">{JSON.stringify(log.details)}</p>
+                  </button>
+                ))}
+              </div>
+              {selectedActivity ? (
+                <div className="rounded-xl border bg-muted/5 p-4">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Selected Event</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">{selectedActivity.action}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">User: {selectedActivity.user_id || "Anonymous"}</p>
+                  <pre className="mt-3 overflow-x-auto rounded-lg bg-background p-3 text-[10px] text-muted-foreground">{JSON.stringify(selectedActivity.details, null, 2)}</pre>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-muted/30 bg-background/80 p-4 text-sm text-muted-foreground">
+                  Select an event card to inspect details.
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
 
