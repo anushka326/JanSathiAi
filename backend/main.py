@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     try:
         await mongo_manager.connect()
         if mongo_manager.is_connected:
-            from services.auth_service import seed_demo_users
+            from .services.auth_service import seed_demo_users
             await seed_demo_users()
     except Exception:
         logging.exception("MongoDB connection failed; continuing without persistence")
