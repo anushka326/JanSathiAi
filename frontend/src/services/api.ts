@@ -1,14 +1,15 @@
 import axios from "axios";
 import type { EligibilityRequest, EligibilityResponse, Scheme, SchemeDecision, User } from "../types";
 
+console.log("VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL);
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api/v1",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
 });
-
 // Axios interceptor to inject Authorization token from localStorage
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
